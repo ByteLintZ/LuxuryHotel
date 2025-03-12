@@ -1,0 +1,66 @@
+import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
+import { FaHotel } from "react-icons/fa";
+
+export default function Navbar() {
+  const { data: session } = useSession();
+
+  return (
+    <nav className="flex justify-between items-center px-6 py-4 bg-cyan-700 shadow-lg text-white">
+      {/* Brand / Logo */}
+      <div className="text-2xl font-bold flex items-center gap-2">
+        <FaHotel className="text-yellow-200" />
+        <Link href="/" className="hover:text-yellow-200 transition-colors">
+            LuxeStay
+        </Link>
+      </div>
+
+      {/* Nav Links */}
+      <div className="flex gap-4 items-center">
+        {!session && (
+          <>
+            <Link href="/auth/login" className="hover:text-yellow-200 transition-colors">
+              Login
+            </Link>
+            <Link href="/auth/signup" className="hover:text-yellow-200 transition-colors">
+              Sign Up
+            </Link>
+          </>
+        )}
+        {session?.user?.role === "admin" && (
+          <>
+            <Link href="/admin" className="hover:text-yellow-200 transition-colors">
+              Admin Dashboard
+            </Link>
+            <Link href="/admin/hotels" className="hover:text-yellow-200 transition-colors">
+              Manage Hotels
+            </Link>
+          </>
+        )}
+        {session && session.user.role !== "admin" && (
+          <>
+            <Link href="/book" className="hover:text-yellow-200 transition-colors">
+              Book Hotel
+            </Link>
+            <Link href="/bookings" className="hover:text-yellow-200 transition-colors">
+              My Bookings
+            </Link>
+            <Link href="/profile" className="hover:text-yellow-200 transition-colors">
+              Profile
+            </Link>
+          </>
+        )}
+
+        {/* Optional: Sign Out button for authenticated users */}
+        {session && (
+          <button
+            onClick={() => signOut()}
+            className="hover:text-yellow-200 transition-colors"
+          >
+            Sign Out
+          </button>
+        )}
+      </div>
+    </nav>
+  );
+}
