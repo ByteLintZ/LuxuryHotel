@@ -6,7 +6,7 @@ export default function Navbar() {
   const { data: session } = useSession();
 
   return (
-    <nav className="flex justify-between items-center px-6 py-4 bg-cyan-700 shadow-lg text-white">
+    <nav className="flex justify-between items-center px-6 py-4 bg-cyan-400 shadow-lg text-white">
       {/* Brand / Logo */}
       <div className="text-2xl font-bold flex items-center gap-2">
         <FaHotel className="text-yellow-200" />
@@ -54,7 +54,7 @@ export default function Navbar() {
         {/* Optional: Sign Out button for authenticated users */}
         {session && (
           <button
-            onClick={() => signOut()}
+            onClick={() => signOut({ callbackUrl: "/auth/login" })}
             className="hover:text-yellow-200 transition-colors"
           >
             Sign Out

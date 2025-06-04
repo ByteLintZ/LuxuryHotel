@@ -2,7 +2,7 @@
 
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
-import { IncomingForm } from "formidable";
+import { IncomingForm, Fields, Files } from "formidable";
 import cloudinaryModule from "cloudinary";
 import fs from "fs";
 import util from "util";
@@ -15,9 +15,6 @@ export const config = {
 };
 
 const prisma = new PrismaClient();
-
-// These lines should be moved inside the POST method handler where 'name', 'location', 'description', and 'price' are defined.
-
 
 // Configure Cloudinary using environment variables.
 const cloudinary = cloudinaryModule.v2;
@@ -36,10 +33,9 @@ cloudinary.config({
 
 // Helper function to parse incoming form data using formidable.
 const parseForm = (req: NextApiRequest): Promise<{ fields: any; files: any }> => {
-  const form = new IncomingForm();
-  form.keepExtensions = true;
+    const form = new IncomingForm({ keepExtensions: true });
   return new Promise((resolve, reject) => {
-    form.parse(req, (err, fields, files) => {
+    form.parse(req, (err: any, fields: Fields, files: Files) => {
       if (err) return reject(err);
       resolve({ fields, files });
     });
