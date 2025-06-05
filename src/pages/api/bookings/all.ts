@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       orderBy: { createdAt: "desc" },
     });
     res.status(200).json(bookings);
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch bookings" });
   }
 }

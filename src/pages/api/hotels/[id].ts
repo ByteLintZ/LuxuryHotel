@@ -40,25 +40,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === "PUT") {
     try {
-      let updateData: any = {};
+      const updateData: { name?: string; location?: string; description?: string; price?: number; image?: string } = {};
       if (req.headers["content-type"]?.includes("multipart/form-data")) {
         // Handle FormData (with image upload)
         const form = formidable({ keepExtensions: true });
-        const data = await new Promise<{ fields: any; files: any }>((resolve, reject) => {
-          form.parse(req, (err: any, fields: any, files: any) => {
+        const data = await new Promise<{ fields: Record<string, string | string[]>; files: Record<string, formidable.File | formidable.File[]> }>((resolve, reject) => {
+          form.parse(req, (err: unknown, fields: formidable.Fields, files: formidable.Files) => {
             if (err) reject(err);
-            else resolve({ fields, files });
+            else resolve({ fields: fields as Record<string, string | string[]>, files: files as Record<string, formidable.File | formidable.File[]> });
           });
         });
         const { name, location, description, price } = data.fields;
-        if (name !== undefined) updateData.name = name;
-        if (location !== undefined) updateData.location = location;
-        if (description !== undefined) updateData.description = description;
+        if (name !== undefined) updateData.name = name as string;
+        if (location !== undefined) updateData.location = location as string;
+        if (description !== undefined) updateData.description = description as string;
         if (price !== undefined) updateData.price = Number(price);
-        if (data.files.image && data.files.image.size > 0) {
-          // Only upload if a new image is provided
-          const fileObj = Array.isArray(data.files.image) ? data.files.image[0] : data.files.image;
-          const filePath = fileObj.filepath || fileObj.path;
+        let fileObj = data.files.image;
+        if (Array.isArray(fileObj)) fileObj = fileObj[0];
+        if (fileObj && (fileObj as formidable.File).size && (fileObj as formidable.File).size > 0) {
+          const filePath = (fileObj as formidable.File).filepath;
           const cloudinary = cloudinaryModule.v2;
           const result = await cloudinary.uploader.upload(filePath, { folder: "hotels" });
           updateData.image = result.secure_url;

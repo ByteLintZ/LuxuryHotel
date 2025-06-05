@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const user = await prisma.user.findUnique({ where: { id: userId } });
       return res.status(200).json(user);
-    } catch (error) {
+    } catch {
       return res.status(500).json({ error: "Failed to fetch profile" });
     }
   } else if (req.method === "PUT") {
@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: updateData,
       });
       return res.status(200).json(updatedUser);
-    } catch (error) {
+    } catch {
       return res.status(500).json({ error: "Failed to update profile" });
     }
   } else {

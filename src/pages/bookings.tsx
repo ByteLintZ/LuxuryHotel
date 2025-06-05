@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import { useSession } from "next-auth/react";
-import { FaCalendarAlt, FaTimesCircle, FaHotel, FaInfoCircle } from "react-icons/fa";
+import { FaCalendarAlt, FaHotel, FaInfoCircle, FaTimesCircle } from "react-icons/fa";
 import Modal from "react-modal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { motion, AnimatePresence } from "framer-motion"; // Framer Motion for animations
+import { motion } from "framer-motion"; // Framer Motion for animations
+import Image from "next/image"; // Next.js Image component
 
 Modal.setAppElement("#__next");
 
@@ -33,50 +34,6 @@ interface Booking {
   };
 }
 
-interface BookingDetailsModalProps {
-  booking: Booking | null;
-  onClose: () => void;
-  onPayNow?: (booking: Booking) => void;
-}
-
-function BookingDetailsModal({ booking, onClose, onPayNow }: BookingDetailsModalProps) {
-  if (!booking) return null;
-  let paymentDetails: any = null;
-  if (booking.paymentDetails) {
-    try { paymentDetails = JSON.parse(booking.paymentDetails); } catch {}
-  }
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fadeIn">
-      <div className="bg-white p-8 rounded-2xl shadow-2xl text-gray-900 w-full max-w-md animate-fade-in-up relative">
-        <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl" onClick={onClose}>&times;</button>
-        <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><FaInfoCircle /> Booking Details</h2>
-        <img src={booking.hotel.image} alt={booking.hotel.name} className="w-full h-40 object-cover rounded mb-3" />
-        <div className="mb-2"><span className="font-bold">Hotel:</span> {booking.hotel.name}</div>
-        <div className="mb-2"><span className="font-bold">Location:</span> {booking.hotel.location}</div>
-        {booking.roomType && <div className="mb-2"><span className="font-bold">Room Type:</span> {booking.roomType.name} (${booking.roomType.price}/night)</div>}
-        <div className="mb-2"><span className="font-bold">Check-in:</span> {new Date(booking.checkIn).toLocaleDateString()}</div>
-        <div className="mb-2"><span className="font-bold">Check-out:</span> {new Date(booking.checkOut).toLocaleDateString()}</div>
-        <div className="mb-2"><span className="font-bold">Nights:</span> {booking.nights}</div>
-        <div className="mb-2"><span className="font-bold">Total Price:</span> ${booking.totalPrice}</div>
-        <div className="mb-2"><span className="font-bold">Status:</span> <span className={`font-semibold ${booking.status === 'Cancelled' ? 'text-red-500' : booking.status === 'Pending Payment' ? 'text-yellow-500' : 'text-green-600'}`}>{booking.status}</span></div>
-        <div className="mb-2"><span className="font-bold">Payment Method:</span> {booking.paymentMethod ? booking.paymentMethod.charAt(0).toUpperCase() + booking.paymentMethod.slice(1) : 'N/A'}
-          {/* Payment details breakdown */}
-          {booking.paymentDetails && booking.paymentMethod === "credit" && (() => { try { const d = JSON.parse(booking.paymentDetails); return d.card ? <> (**** **** **** {String(d.card).slice(-4)})</> : null; } catch { return null; } })()}
-          {booking.paymentDetails && booking.paymentMethod === "paypal" && (() => { try { const d = JSON.parse(booking.paymentDetails); return d.paypal ? <> ({d.paypal})</> : null; } catch { return null; } })()}
-          {booking.paymentDetails && booking.paymentMethod === "applepay" && (() => { try { const d = JSON.parse(booking.paymentDetails); return d.applepay ? <> ({d.applepay})</> : null; } catch { return null; } })()}
-        </div>
-        <div className="mb-2 text-xs text-gray-500">Booked on: {booking.createdAt ? new Date(booking.createdAt).toLocaleString() : ''}</div>
-        <div className="mt-4 mb-2 p-3 bg-blue-50 rounded text-blue-900 text-sm">
-          <span className="font-bold">Cancellation Policy:</span> Free cancellation up to 24 hours before check-in. After that, one night will be charged.
-        </div>
-        {booking.status === 'Pending Payment' && onPayNow && (
-          <button className="w-full bg-green-600 text-white py-2 rounded font-bold mt-2 hover:bg-green-700" onClick={() => onPayNow(booking)}>Pay Now</button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function getPendingCountdown(createdAt: string): { expired: boolean; minutes: number; seconds: number } {
   const created = new Date(createdAt).getTime();
   const now = Date.now();
@@ -90,10 +47,7 @@ function getPendingCountdown(createdAt: string): { expired: boolean; minutes: nu
 export default function MyBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { data: session } = useSession();
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     dateFrom: '',
     dateTo: '',
@@ -107,8 +61,8 @@ export default function MyBookings() {
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [paymentDetails, setPaymentDetails] = useState<any>({});
-  const [bookingToPay, setBookingToPay] = useState<any>(null);
+  const [paymentDetails, setPaymentDetails] = useState<Record<string, string>>({});
+  const [bookingToPay, setBookingToPay] = useState<Booking | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
@@ -125,35 +79,9 @@ export default function MyBookings() {
       const data: Booking[] = await res.json();
       setBookings(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const openDeleteModal = (id: string) => {
-    setSelectedBookingId(id);
-    setModalIsOpen(true);
-  };
-
-  const closeDeleteModal = () => {
-    setSelectedBookingId(null);
-    setModalIsOpen(false);
-  };
-
-  const cancelBooking = async () => {
-    if (!selectedBookingId) return;
-    try {
-      const res = await fetch(`/api/bookings/${selectedBookingId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to cancel booking");
-
-      setBookings((prev) => prev.filter((booking) => booking.id !== selectedBookingId));
-
-      toast.success("Booking canceled successfully!", { autoClose: 3000 });
-    } catch (err) {
       toast.error("Error: " + (err instanceof Error ? err.message : String(err)));
     } finally {
-      closeDeleteModal();
+      setLoading(false);
     }
   };
 
@@ -189,6 +117,19 @@ export default function MyBookings() {
       if (countdownInterval.current) clearInterval(countdownInterval.current);
     }
   }, [showDetailsModal, selectedBooking]);
+
+  const cancelBooking = async (bookingId: string) => {
+    if (confirm("Are you sure you want to cancel this booking?")) {
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Failed to cancel booking");
+        toast.success("Booking cancelled successfully");
+        fetchBookings();
+      } catch (err) {
+        toast.error("Error: " + (err instanceof Error ? err.message : String(err)));
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-cyan-400 to-cyan-600 p-8 text-white">
@@ -254,10 +195,6 @@ export default function MyBookings() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {activeBookings.map((booking) => {
-            let paymentDetails: any = null;
-            if (booking.paymentDetails) {
-              try { paymentDetails = JSON.parse(booking.paymentDetails); } catch {}
-            }
             return (
               <motion.div
                 key={booking.id}
@@ -268,7 +205,7 @@ export default function MyBookings() {
                 transition={{ duration: 0.3 }}
                 onClick={() => { setSelectedBooking(booking); setShowDetailsModal(true); }}
               >
-                <img src={booking.hotel.image} alt={booking.hotel.name} className="w-full h-44 object-cover rounded-md" />
+                <Image src={booking.hotel.image} alt={booking.hotel.name} className="w-full h-44 object-cover rounded-md" width={400} height={160} priority />
                 <h2 className="text-2xl font-bold mt-3">{booking.hotel.name}</h2>
                 <p className="text-sm text-gray-600">{booking.hotel.location}</p>
                 <p className="mt-2 flex items-center gap-2 text-blue-900 font-semibold">
@@ -294,13 +231,15 @@ export default function MyBookings() {
                 {booking.status === 'Pending Payment' && (
                   <button className="mt-2 bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700" onClick={e => { e.stopPropagation(); setSelectedBooking(booking); setShowDetailsModal(true); }}>Pay Now</button>
                 )}
-                <motion.button
-                  onClick={e => { e.stopPropagation(); openDeleteModal(booking.id); }}
-                  className="mt-4 flex items-center gap-2 text-red-500 hover:text-red-700 transition"
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FaTimesCircle /> Cancel Booking
-                </motion.button>
+                {booking.status !== 'Cancelled' && (
+                  <motion.button
+                    onClick={e => { e.stopPropagation(); cancelBooking(booking.id); }}
+                    className="mt-4 flex items-center gap-2 text-red-500 hover:text-red-700 transition"
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FaTimesCircle /> Cancel Booking
+                  </motion.button>
+                )}
               </motion.div>
             );
           })}
@@ -319,10 +258,6 @@ export default function MyBookings() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {historyBookings.map((booking) => {
-            let paymentDetails: any = null;
-            if (booking.paymentDetails) {
-              try { paymentDetails = JSON.parse(booking.paymentDetails); } catch {}
-            }
             return (
               <motion.div
                 key={booking.id}
@@ -333,7 +268,7 @@ export default function MyBookings() {
                 transition={{ duration: 0.3 }}
                 onClick={() => { setSelectedBooking(booking); setShowDetailsModal(true); }}
               >
-                <img src={booking.hotel.image} alt={booking.hotel.name} className="w-full h-44 object-cover rounded-md" />
+                <Image src={booking.hotel.image} alt={booking.hotel.name} className="w-full h-44 object-cover rounded-md" width={400} height={160} priority />
                 <h2 className="text-2xl font-bold mt-3">{booking.hotel.name}</h2>
                 <p className="text-sm text-gray-600">{booking.hotel.location}</p>
                 <p className="mt-2 flex items-center gap-2 text-blue-900 font-semibold">
@@ -351,13 +286,6 @@ export default function MyBookings() {
                   </p>
                 )}
                 <p className={`font-semibold mt-1 ${booking.status === 'Cancelled' ? 'text-red-500' : booking.status === 'Pending Payment' ? 'text-yellow-500' : 'text-green-600'}`}>Status: {booking.status}</p>
-                <motion.button
-                  onClick={e => { e.stopPropagation(); openDeleteModal(booking.id); }}
-                  className="mt-4 flex items-center gap-2 text-red-500 hover:text-red-700 transition"
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FaTimesCircle /> Cancel Booking
-                </motion.button>
               </motion.div>
             );
           })}
@@ -369,7 +297,7 @@ export default function MyBookings() {
           <div className="bg-white p-8 rounded-2xl shadow-2xl text-gray-900 w-full max-w-md animate-fade-in-up relative">
             <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl" onClick={() => setShowDetailsModal(false)}>&times;</button>
             <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><FaInfoCircle /> Booking Details</h2>
-            <img src={selectedBooking.hotel.image} alt={selectedBooking.hotel.name} className="w-full h-40 object-cover rounded mb-3" />
+            <Image src={selectedBooking.hotel.image} alt={selectedBooking.hotel.name} className="w-full h-40 object-cover rounded mb-3" width={400} height={160} priority />
             <div className="mb-2"><span className="font-bold">Hotel:</span> {selectedBooking.hotel.name}</div>
             <div className="mb-2"><span className="font-bold">Location:</span> {selectedBooking.hotel.location}</div>
             {selectedBooking.roomType && <div className="mb-2"><span className="font-bold">Room Type:</span> {selectedBooking.roomType.name} (${selectedBooking.roomType.price}/night)</div>}
@@ -422,7 +350,7 @@ export default function MyBookings() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   hotelId: bookingToPay.hotel.id,
-                  roomTypeId: bookingToPay.roomType.id,
+                  roomTypeId: bookingToPay.roomType ? bookingToPay.roomType.id : undefined,
                   checkIn: bookingToPay.checkIn,
                   checkOut: bookingToPay.checkOut,
                   createdAt: bookingToPay.createdAt,

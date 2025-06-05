@@ -5,10 +5,7 @@ const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const [totalRevenue, totalBookings, totalHotels, bookings, hotels] = await Promise.all([
-      prisma.booking.aggregate({ _sum: { /* price is per night, so sum up per booking */ total: { _avg: true } } }),
-      prisma.booking.count(),
-      prisma.hotel.count(),
+    const [bookings, hotels] = await Promise.all([
       prisma.booking.findMany({ include: { roomType: true } }),
       prisma.hotel.findMany({ include: { roomTypes: true } }),
     ]);
@@ -35,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       popularRoomTypes,
       totalHotels: hotels.length,
     });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch analytics" });
   }
 }
