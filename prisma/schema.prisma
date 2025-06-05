@@ -30,16 +30,31 @@ model Hotel {
   price       Float
   image       String  // Store image URL
   bookings    Booking[]
+  roomTypes   RoomType[]
 }
 
+model RoomType {
+  id        String   @id @default(uuid())
+  name      String
+  price     Float
+  hotelId   String
+  hotel     Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  bookings  Booking[]
+}
 
 model Booking {
-  id        String  @id @default(uuid())
-  userEmail String
-  hotelId   String
-  checkIn   DateTime
-  checkOut  DateTime
-  hotel     Hotel   @relation(fields: [hotelId], references: [id], onDelete: Cascade)
-  user      User    @relation(fields: [userEmail], references: [email])
+  id            String  @id @default(uuid())
+  userEmail     String
+  hotelId       String
+  roomTypeId    String
+  checkIn       DateTime
+  checkOut      DateTime
+  hotel         Hotel   @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  roomType      RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  user          User    @relation(fields: [userEmail], references: [email])
+  paymentMethod String? // NEW: e.g. 'credit', 'paypal', 'applepay'
+  paymentDetails String? // NEW: JSON string for mock details
+  status    String  @default("Confirmed") // Confirmed, Cancelled, Pending Payment
+  createdAt DateTime @default(now())
 }
 

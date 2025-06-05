@@ -12,35 +12,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { id } = req.query; // The booking ID from the request URL
-  const userId = session.user.id; // Ensure the user can only delete their own bookings
+  const userEmail = session.user.email; // Use email for user identification
 
   if (req.method === "DELETE") {
     try {
-      const hotel = await prisma.hotel.findUnique({
+      // Find the booking and ensure it belongs to the user
+      const booking = await prisma.booking.findUnique({
         where: { id: String(id) },
       });
-  
-      if (!hotel) {
-        return res.status(404).json({ error: "Hotel not found" });
+      if (!booking || booking.userEmail !== userEmail) {
+        return res.status(404).json({ error: "Booking not found" });
       }
-  
-      // Delete related bookings first
-      await prisma.booking.deleteMany({
-        where: { hotelId: String(id) },
-      });
-  
-      // Now delete the hotel
-      await prisma.hotel.delete({
+      await prisma.booking.delete({
         where: { id: String(id) },
       });
-  
-      return res.status(200).json({ message: "Hotel and related bookings deleted" });
+      return res.status(200).json({ message: "Booking deleted" });
     } catch (error) {
-      console.error("Error deleting hotel:", error);
-      return res.status(500).json({ error: "Failed to delete hotel" });
+      console.error("Error deleting booking:", error);
+      return res.status(500).json({ error: "Failed to delete booking" });
     }
-  }
-   else {
+  } else {
     res.status(405).json({ error: 'Method Not Allowed' });
   }
 }

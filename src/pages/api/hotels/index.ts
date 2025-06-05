@@ -81,6 +81,15 @@ console.log("Parsed files:", files);
         await util.promisify(fs.unlink)(filePath);
       }
 
+      const roomTypesRaw = fields.roomTypes;
+      let roomTypes: { name: string; price: string }[] = [];
+      if (roomTypesRaw) {
+        try {
+          roomTypes = JSON.parse(Array.isArray(roomTypesRaw) ? roomTypesRaw[0] : roomTypesRaw);
+        } catch (e) {
+          console.error("Failed to parse roomTypes", e);
+        }
+      }
       const hotel = await prisma.hotel.create({
         data: {
           name: nameValue,
@@ -88,7 +97,11 @@ console.log("Parsed files:", files);
           description: descriptionValue,
           price: parseFloat(priceValue),
           image: imageUrl,
+          roomTypes: {
+            create: roomTypes.filter(rt => rt.name && rt.price).map(rt => ({ name: rt.name, price: parseFloat(rt.price) }))
+          }
         },
+        include: { roomTypes: true },
       });
       
       return res.status(201).json(hotel);

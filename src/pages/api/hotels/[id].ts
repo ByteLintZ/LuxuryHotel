@@ -1,5 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
+import formidable from "formidable";
+import cloudinaryModule from "cloudinary";
+import fs from "fs";
+import util from "util";
+
+export const config = { api: { bodyParser: false } }
 
 const prisma = new PrismaClient(); // Consider using a singleton pattern
 
@@ -34,23 +40,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === "PUT") {
     try {
-      const { name, location, description, price, image } = req.body;
-
-      if (!name || !location || !description || !price || !image) {
-        return res.status(400).json({ error: "Missing required fields" });
+      let updateData: any = {};
+      if (req.headers["content-type"]?.includes("multipart/form-data")) {
+        // Handle FormData (with image upload)
+        const form = formidable({ keepExtensions: true });
+        const data = await new Promise<{ fields: any; files: any }>((resolve, reject) => {
+          form.parse(req, (err: any, fields: any, files: any) => {
+            if (err) reject(err);
+            else resolve({ fields, files });
+          });
+        });
+        const { name, location, description, price } = data.fields;
+        if (name !== undefined) updateData.name = name;
+        if (location !== undefined) updateData.location = location;
+        if (description !== undefined) updateData.description = description;
+        if (price !== undefined) updateData.price = Number(price);
+        if (data.files.image && data.files.image.size > 0) {
+          // Only upload if a new image is provided
+          const fileObj = Array.isArray(data.files.image) ? data.files.image[0] : data.files.image;
+          const filePath = fileObj.filepath || fileObj.path;
+          const cloudinary = cloudinaryModule.v2;
+          const result = await cloudinary.uploader.upload(filePath, { folder: "hotels" });
+          updateData.image = result.secure_url;
+          await util.promisify(fs.unlink)(filePath);
+        }
+      } else {
+        // Handle JSON
+        const { name, location, description, price, image } = req.body;
+        if (name !== undefined) updateData.name = name;
+        if (location !== undefined) updateData.location = location;
+        if (description !== undefined) updateData.description = description;
+        if (price !== undefined) updateData.price = Number(price);
+        if (image !== undefined) updateData.image = image;
       }
-
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ error: "No fields provided for update" });
+      }
       const updatedHotel = await prisma.hotel.update({
         where: { id: String(id) },
-        data: {
-          name,
-          location,
-          description,
-          price: Number(price),
-          image,
-        },
+        data: updateData,
       });
-
       return res.status(200).json(updatedHotel);
     } catch (error) {
       console.error("Error updating hotel:", error instanceof Error ? error.message : error);
