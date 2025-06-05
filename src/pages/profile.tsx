@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Head from "next/head";
 import { useSession, signOut } from "next-auth/react";
 import { FaUserEdit, FaSignOutAlt, FaUserCircle } from "react-icons/fa";
+import Image from "next/image";
 
 export default function Profile() {
   const { data: session } = useSession();
@@ -65,7 +66,13 @@ export default function Profile() {
           {/* Profile Avatar */}
           <div className="flex flex-col items-center mb-4">
             {session.user?.image ? (
-              <img src={session.user.image} alt="User Avatar" className="w-20 h-20 rounded-full shadow-lg" />
+              <Image
+                src={session.user.image}
+                alt="User Avatar"
+                className="w-20 h-20 rounded-full shadow-lg"
+                width={80}
+                height={80}
+              />
             ) : (
               <FaUserCircle className="w-20 h-20 text-gray-400" />
             )}

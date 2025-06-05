@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AiOutlineStar, AiOutlineFacebook, AiOutlineInstagram, AiOutlineTwitter } from "react-icons/ai";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -55,7 +56,7 @@ export default function Home() {
 
       {/* 🌀 Wave Divider (Hero → Hotels) */}
       <div className="flex justify-center bg-gradient-to-r from-sky-400 via-white to-[#f0dc6d] py-4">
-        <img src="/www.svg" alt="Wave Divider" className="w-2/3" />
+        <Image src="/www.svg" alt="Wave Divider" width={800} height={120} className="w-2/3 drop-shadow-xl" />
       </div>
 
       {/* 🏨 Featured Hotels */}
@@ -79,7 +80,7 @@ export default function Home() {
               className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:scale-105 transition duration-300"
               whileHover={{ scale: 1.05 }}
             >
-              <img src={hotel.img} alt={hotel.name} className="w-full h-48 object-cover" />
+              <Image src={hotel.img} alt={hotel.name} width={400} height={224} className="w-full h-48 object-cover" />
               <div className="p-5 text-center">
                 <h3 className="text-black text-grad text-xl font-bold">{hotel.name}</h3>
                 <p className="text-gray-600">{hotel.price}</p>
@@ -110,7 +111,7 @@ export default function Home() {
               className="bg-white p-6 rounded-lg shadow-md transform hover:scale-105 transition"
               whileHover={{ scale: 1.02 }}
             >
-              <p className="text-gray-700 italic">"{review.review}"</p>
+              <p className="text-gray-700 italic">&quot;{review.review}&quot;</p>
               <div className="flex items-center justify-center mt-2">
                 <AiOutlineStar className="text-yellow-400 text-2xl drop-shadow-md animate-pulse" />
                 <AiOutlineStar className="text-yellow-400 text-2xl drop-shadow-md animate-pulse" />

@@ -32,10 +32,10 @@ cloudinary.config({
 });
 
 // Helper function to parse incoming form data using formidable.
-const parseForm = (req: NextApiRequest): Promise<{ fields: any; files: any }> => {
+const parseForm = (req: NextApiRequest): Promise<{ fields: unknown; files: unknown }> => {
     const form = new IncomingForm({ keepExtensions: true });
   return new Promise((resolve, reject) => {
-    form.parse(req, (err: any, fields: Fields, files: Files) => {
+    form.parse(req, (err: unknown, fields: Fields, files: Files) => {
       if (err) return reject(err);
       resolve({ fields, files });
     });
@@ -56,36 +56,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // POST: Parse form data, optionally upload an image to Cloudinary, and create a hotel record.
     try {
       const { fields, files } = await parseForm(req);
-      console.log("Parsed fields:", fields);
-console.log("Parsed files:", files);
-      const { name, location, description, price } = fields;
-      const nameValue = Array.isArray(name) ? name[0] : name;
-      const locationValue = Array.isArray(location) ? location[0] : location;
-      const descriptionValue = Array.isArray(description) ? description[0] : description;
-      const priceValue = Array.isArray(price) ? price[0] : price;
+      const typedFields: Record<string, string | string[] | undefined> = fields as Record<string, string | string[] | undefined>;
+      const typedFiles: Record<string, { filepath: string } | Array<{ filepath: string }>> = files as Record<string, { filepath: string } | Array<{ filepath: string }>>;
+      console.log("Parsed fields:", typedFields);
+      console.log("Parsed files:", typedFiles);
+      const { name, location, description, price } = typedFields;
+      const nameValue = Array.isArray(name) ? name[0] : name || "";
+      const locationValue = Array.isArray(location) ? location[0] : location || "";
+      const descriptionValue = Array.isArray(description) ? description[0] : description || "";
+      const priceValue = Array.isArray(price) ? price[0] : price || "0";
       let imageUrl = "";
 
-      if (files.image) {
-        const fileObj = Array.isArray(files.image) ? files.image[0] : files.image;
-        const filePath = fileObj.filepath || fileObj.path;
+      if (typedFiles.image) {
+        const fileObj = Array.isArray(typedFiles.image) ? typedFiles.image[0] : typedFiles.image;
+        const filePath = fileObj.filepath;
         if (!filePath) {
             console.error("No file path found for the uploaded image. fileObj:", fileObj);
             throw new Error("No file path found for the uploaded image.");
           }
-        
-          const result = await cloudinary.uploader.upload(filePath, { folder: "hotels" });
-          console.log("Cloudinary upload result:", result);
-          imageUrl = result.secure_url;
-          
-        // Remove the temporary file.
+        const result = await cloudinary.uploader.upload(filePath, { folder: "hotels" });
+        console.log("Cloudinary upload result:", result);
+        imageUrl = result.secure_url;
         await util.promisify(fs.unlink)(filePath);
       }
 
-      const roomTypesRaw = fields.roomTypes;
-      let roomTypes: { name: string; price: string }[] = [];
+      const roomTypesRaw = typedFields.roomTypes;
+      let roomTypes: Array<{ name: string; price: string }> = [];
       if (roomTypesRaw) {
         try {
-          roomTypes = JSON.parse(Array.isArray(roomTypesRaw) ? roomTypesRaw[0] : roomTypesRaw);
+          const parsed = JSON.parse(Array.isArray(roomTypesRaw) ? roomTypesRaw[0] : roomTypesRaw);
+          roomTypes = Array.isArray(parsed)
+            ? parsed.filter(rt => typeof rt.name === 'string' && typeof rt.price === 'string')
+            : [];
         } catch (e) {
           console.error("Failed to parse roomTypes", e);
         }
@@ -98,7 +100,7 @@ console.log("Parsed files:", files);
           price: parseFloat(priceValue),
           image: imageUrl,
           roomTypes: {
-            create: roomTypes.filter(rt => rt.name && rt.price).map(rt => ({ name: rt.name, price: parseFloat(rt.price) }))
+            create: roomTypes.map(rt => ({ name: rt.name, price: parseFloat(rt.price) }))
           }
         },
         include: { roomTypes: true },

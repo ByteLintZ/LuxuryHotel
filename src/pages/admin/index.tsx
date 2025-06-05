@@ -4,7 +4,23 @@ import { PrismaClient } from "@prisma/client";
 import { FaUserShield, FaHotel, FaClipboardList, FaUsers } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-export default function Admin({ user, stats }: { user: any; stats: any }) {
+interface AdminUser {
+  name: string;
+  role: string;
+}
+interface AdminStats {
+  totalHotels: number;
+  totalBookings: number;
+  newUsers: number;
+}
+
+export default function Admin({
+  user,
+  stats,
+}: {
+  user: AdminUser | null;
+  stats: AdminStats | null;
+}) {
   if (!user || user.role !== "admin") {
     return (
       <p className="text-center mt-10 text-xl text-red-500 animate-fadeIn">
@@ -49,12 +65,14 @@ export default function Admin({ user, stats }: { user: any; stats: any }) {
             <div>
               <p className="text-lg font-bold text-blue-900">Total Hotels</p>
               <p className="text-2xl font-semibold text-blue-900">
-                {stats.totalHotels}
+                {stats ? stats.totalHotels : 0}
               </p>
               <div className="mt-1 w-full bg-blue-300 h-2 rounded-md">
                 <div
                   className="bg-blue-700 h-2 rounded-md"
-                  style={{ width: `${Math.min(stats.totalHotels, 100)}%` }}
+                  style={{
+                    width: `${Math.min(stats ? stats.totalHotels : 0, 100)}%`,
+                  }}
                 ></div>
               </div>
             </div>
@@ -69,13 +87,13 @@ export default function Admin({ user, stats }: { user: any; stats: any }) {
             <div>
               <p className="text-lg font-bold text-green-900">Total Bookings</p>
               <p className="text-2xl font-semibold text-green-900">
-                {stats.totalBookings}
+                {stats ? stats.totalBookings : 0}
               </p>
               <div className="mt-1 w-full bg-green-300 h-2 rounded-md">
                 <div
                   className="bg-green-700 h-2 rounded-md"
                   style={{
-                    width: `${Math.min(stats.totalBookings / 2, 100)}%`,
+                    width: `${Math.min(stats ? stats.totalBookings / 2 : 0, 100)}%`,
                   }}
                 ></div>
               </div>
@@ -91,12 +109,12 @@ export default function Admin({ user, stats }: { user: any; stats: any }) {
             <div>
               <p className="text-lg font-bold text-purple-900">New Users</p>
               <p className="text-2xl font-semibold text-purple-900">
-                {stats.newUsers}
+                {stats ? stats.newUsers : 0}
               </p>
               <div className="mt-1 w-full bg-purple-300 h-2 rounded-md">
                 <div
                   className="bg-purple-700 h-2 rounded-md"
-                  style={{ width: `${Math.min(stats.newUsers * 10, 100)}%` }}
+                  style={{ width: `${Math.min(stats ? stats.newUsers * 10 : 0, 100)}%` }}
                 ></div>
               </div>
             </div>

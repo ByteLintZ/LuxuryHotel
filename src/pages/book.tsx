@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
-import { useSession } from "next-auth/react";
 import {
   FaCheckCircle,
   FaSearch,
@@ -9,6 +8,7 @@ import {
   FaHotel,
 } from "react-icons/fa";
 import { RoomType } from "../types/roomtype";
+import Image from "next/image";
 
 interface Hotel {
   id: string;
@@ -50,9 +50,22 @@ export default function Book() {
   );
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>("");
-  const [paymentDetails, setPaymentDetails] = useState<any>({});
-  const [bookingPayload, setBookingPayload] = useState<any>(null);
-  const { data: session } = useSession();
+  const [paymentDetails, setPaymentDetails] = useState<{
+    card?: string;
+    name?: string;
+    expiry?: string;
+    cvc?: string;
+    paypal?: string;
+    applepay?: string;
+  }>({
+    card: undefined,
+    name: undefined,
+    expiry: undefined,
+    cvc: undefined,
+    paypal: undefined,
+    applepay: undefined,
+  });
+  const [bookingPayload, setBookingPayload] = useState<BookingConfirmation | null>(null);
   const [pendingCountdown, setPendingCountdown] = useState<{
     minutes: number;
     seconds: number;
@@ -317,10 +330,12 @@ export default function Book() {
                 className="bg-white text-gray-900 rounded-lg shadow-lg p-4 transform transition-transform hover:scale-105 hover:shadow-2xl duration-300 animate-fadeIn"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <img
+                <Image
                   src={hotel.image}
                   alt={hotel.name}
                   className="w-full h-40 object-cover rounded-md transition-opacity duration-500 hover:opacity-80"
+                  width={400}
+                  height={160}
                 />
                 <h2 className="text-xl font-bold mt-2">{hotel.name}</h2>
                 <p className="text-gray-700 flex items-center gap-2">

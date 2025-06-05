@@ -2,6 +2,7 @@ import { useState, useEffect, ChangeEvent } from "react";
 import { FaPlus, FaTrash, FaHotel, FaSearch, FaEdit, FaExclamationTriangle } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Image from "next/image";
 
 interface Hotel {
   id: string;
@@ -39,7 +40,7 @@ export default function AdminHotels() {
       const data = await res.json();
       setHotels(data);
       setFilteredHotels(data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch hotels.");
     }
   };
@@ -192,7 +193,7 @@ export default function AdminHotels() {
             key={hotel.id}
             className="bg-white text-gray-900 rounded-3xl shadow-2xl overflow-hidden transform hover:scale-105 transition"
           >
-            <img src={hotel.image} alt={hotel.name} className="w-full h-56 object-cover" />
+            <Image src={hotel.image} alt={hotel.name} width={400} height={160} className="w-full h-40 object-cover rounded-md transition-opacity duration-500 hover:opacity-80" />
             <div className="p-6 space-y-2">
               <h2 className="text-2xl font-bold text-blue-800">{hotel.name}</h2>
               <p className="text-cyan-700 font-semibold">{hotel.location}</p>

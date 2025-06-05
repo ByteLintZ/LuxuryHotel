@@ -33,7 +33,7 @@ export default function Signup() {
       } else {
         setError(data.error || "An unexpected error occurred");
       }
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
