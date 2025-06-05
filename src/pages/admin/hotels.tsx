@@ -12,6 +12,11 @@ interface Hotel {
   image: string;
 }
 
+interface RoomTypeForm {
+  name: string;
+  price: string;
+}
+
 export default function AdminHotels() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [filteredHotels, setFilteredHotels] = useState<Hotel[]>([]);
@@ -22,6 +27,7 @@ export default function AdminHotels() {
   const [hotelForm, setHotelForm] = useState({ name: "", location: "", description: "", price: "" });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [roomTypesForm, setRoomTypesForm] = useState<RoomTypeForm[]>([{ name: "", price: "" }]);
 
   useEffect(() => {
     fetchHotels();
@@ -56,6 +62,18 @@ export default function AdminHotels() {
     setFilteredHotels(filtered);
   };
 
+  const handleRoomTypeChange = (idx: number, field: keyof RoomTypeForm, value: string) => {
+    setRoomTypesForm((prev) => prev.map((rt, i) => i === idx ? { ...rt, [field]: value } : rt));
+  };
+
+  const addRoomTypeField = () => {
+    if (roomTypesForm.length < 5) setRoomTypesForm([...roomTypesForm, { name: "", price: "" }]);
+  };
+
+  const removeRoomTypeField = (idx: number) => {
+    setRoomTypesForm((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const openModal = (hotel?: Hotel) => {
     if (hotel) {
       setEditHotel(hotel);
@@ -80,6 +98,7 @@ export default function AdminHotels() {
     formData.append("description", hotelForm.description);
     formData.append("price", hotelForm.price);
     if (imageFile) formData.append("image", imageFile);
+    formData.append("roomTypes", JSON.stringify(roomTypesForm.filter(rt => rt.name && rt.price)));
 
     const res = await fetch("/api/hotels", { method: "POST", body: formData });
 
@@ -94,16 +113,19 @@ export default function AdminHotels() {
 
   const updateHotel = async () => {
     if (!editHotel) return;
-
     const formData = new FormData();
-    formData.append("name", hotelForm.name);
-    formData.append("location", hotelForm.location);
-    formData.append("description", hotelForm.description);
-    formData.append("price", hotelForm.price);
-    if (imageFile) formData.append("image", imageFile);
-
+    let hasChange = false;
+    if (hotelForm.name !== editHotel.name) { formData.append("name", hotelForm.name); hasChange = true; }
+    if (hotelForm.location !== editHotel.location) { formData.append("location", hotelForm.location); hasChange = true; }
+    if (hotelForm.description !== editHotel.description) { formData.append("description", hotelForm.description); hasChange = true; }
+    if (hotelForm.price !== String(editHotel.price)) { formData.append("price", hotelForm.price); hasChange = true; }
+    if (imageFile) { formData.append("image", imageFile); hasChange = true; }
+    // Room types editing for update is not supported in this version
+    if (!hasChange) {
+      toast.info("No changes to update.");
+      return;
+    }
     const res = await fetch(`/api/hotels/${editHotel.id}`, { method: "PUT", body: formData });
-
     if (res.ok) {
       toast.success("Hotel updated successfully!");
       fetchHotels();
@@ -202,6 +224,21 @@ export default function AdminHotels() {
               <textarea name="description" placeholder="Description" value={hotelForm.description} onChange={handleInputChange} className="w-full p-3 border rounded-lg" />
               <input type="number" name="price" placeholder="Price per night" value={hotelForm.price} onChange={handleInputChange} className="w-full p-3 border rounded-lg" />
               <input type="file" accept="image/*" onChange={handleFileChange} className="w-full" />
+              {!editHotel && (
+                <div>
+                  <label className="block font-semibold mb-2">Room Types (max 5):</label>
+                  {roomTypesForm.map((rt, idx) => (
+                    <div key={idx} className="flex gap-2 mb-2">
+                      <input type="text" placeholder="Type (e.g. Deluxe)" value={rt.name} onChange={e => handleRoomTypeChange(idx, 'name', e.target.value)} className="flex-1 p-2 border rounded" />
+                      <input type="number" placeholder="Price" value={rt.price} onChange={e => handleRoomTypeChange(idx, 'price', e.target.value)} className="w-24 p-2 border rounded" />
+                      {roomTypesForm.length > 1 && <button type="button" onClick={() => removeRoomTypeField(idx)} className="text-red-500 font-bold">×</button>}
+                    </div>
+                  ))}
+                  {roomTypesForm.length < 5 && (
+                    <button type="button" onClick={addRoomTypeField} className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded">+ Add Room Type</button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="mt-6 flex justify-end gap-4">
               <button onClick={() => setShowModal(false)} className="bg-gray-300 px-5 py-2 rounded-full font-semibold">Cancel</button>

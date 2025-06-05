@@ -1,4 +1,6 @@
 import { getSession } from "next-auth/react";
+import { GetServerSideProps } from "next";
+import { PrismaClient } from "@prisma/client";
 import { FaUserShield, FaHotel, FaClipboardList, FaUsers } from "react-icons/fa";
 import { motion } from "framer-motion";
 
@@ -32,7 +34,8 @@ export default function Admin({ user, stats }: { user: any; stats: any }) {
         className="bg-white rounded-lg shadow-2xl p-8 border-l-4 border-yellow-300 max-w-6xl mx-auto"
       >
         <p className="text-2xl text-gray-800 mb-8">
-          Welcome, <span className="font-semibold text-blue-600">{user.name}</span>
+          Welcome,{" "}
+          <span className="font-semibold text-blue-600">{user.name}</span>
         </p>
 
         {/* Cards Grid */}
@@ -45,7 +48,9 @@ export default function Admin({ user, stats }: { user: any; stats: any }) {
             <FaHotel className="text-4xl text-blue-900" />
             <div>
               <p className="text-lg font-bold text-blue-900">Total Hotels</p>
-              <p className="text-2xl font-semibold text-blue-900">{stats.totalHotels}</p>
+              <p className="text-2xl font-semibold text-blue-900">
+                {stats.totalHotels}
+              </p>
               <div className="mt-1 w-full bg-blue-300 h-2 rounded-md">
                 <div
                   className="bg-blue-700 h-2 rounded-md"
@@ -63,11 +68,15 @@ export default function Admin({ user, stats }: { user: any; stats: any }) {
             <FaClipboardList className="text-4xl text-green-900" />
             <div>
               <p className="text-lg font-bold text-green-900">Total Bookings</p>
-              <p className="text-2xl font-semibold text-green-900">{stats.totalBookings}</p>
+              <p className="text-2xl font-semibold text-green-900">
+                {stats.totalBookings}
+              </p>
               <div className="mt-1 w-full bg-green-300 h-2 rounded-md">
                 <div
                   className="bg-green-700 h-2 rounded-md"
-                  style={{ width: `${Math.min(stats.totalBookings / 2, 100)}%` }}
+                  style={{
+                    width: `${Math.min(stats.totalBookings / 2, 100)}%`,
+                  }}
                 ></div>
               </div>
             </div>
@@ -81,7 +90,9 @@ export default function Admin({ user, stats }: { user: any; stats: any }) {
             <FaUsers className="text-4xl text-purple-900" />
             <div>
               <p className="text-lg font-bold text-purple-900">New Users</p>
-              <p className="text-2xl font-semibold text-purple-900">{stats.newUsers}</p>
+              <p className="text-2xl font-semibold text-purple-900">
+                {stats.newUsers}
+              </p>
               <div className="mt-1 w-full bg-purple-300 h-2 rounded-md">
                 <div
                   className="bg-purple-700 h-2 rounded-md"
@@ -103,18 +114,21 @@ export default function Admin({ user, stats }: { user: any; stats: any }) {
   );
 }
 
-export async function getServerSideProps(context: any) {
+export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getSession(context);
   if (!session || session.user.role !== "admin") {
-    return { redirect: { destination: "/auth/login", permanent: false } };
+    return { props: { user: null, stats: null } };
   }
-
-  // Dummy statistics for demonstration.
-  const stats = {
-    totalHotels: 42,
-    totalBookings: 128,
-    newUsers: 7,
+  const prisma = new PrismaClient();
+  const [totalHotels, totalBookings, newUsers] = await Promise.all([
+    prisma.hotel.count(),
+    prisma.booking.count(),
+    prisma.user.count(),
+  ]);
+  return {
+    props: {
+      user: session.user,
+      stats: { totalHotels, totalBookings, newUsers },
+    },
   };
-
-  return { props: { user: session.user, stats } };
-}
+};

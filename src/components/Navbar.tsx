@@ -35,6 +35,15 @@ export default function Navbar() {
             <Link href="/admin/hotels" className="hover:text-yellow-200 transition-colors">
               Manage Hotels
             </Link>
+            <Link href="/admin/roomtypes" className="hover:text-yellow-200 transition-colors">
+              Room Types
+            </Link>
+            <Link href="/admin/bookings" className="hover:text-yellow-200 transition-colors">
+              Bookings
+            </Link>
+            <Link href="/admin/analytics" className="hover:text-yellow-200 transition-colors">
+              Analytics
+            </Link>
           </>
         )}
         {session && session.user.role !== "admin" && (
