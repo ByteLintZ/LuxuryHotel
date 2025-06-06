@@ -4,6 +4,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { FaSignInAlt, FaUser, FaLock } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 export default function Login() {
   const { data: session } = useSession();
@@ -35,7 +36,9 @@ export default function Login() {
 
     if (result?.error) {
       setErrorMessage("Invalid email or password."); // Show error message
+      toast.error("Invalid email or password.");
     } else {
+      toast.success("Login successful!");
       router.push("/"); // Redirect only if successful
     }
   };
