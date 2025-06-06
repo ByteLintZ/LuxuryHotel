@@ -2,8 +2,12 @@ import Link from "next/link";
 import { AiOutlineStar, AiOutlineFacebook, AiOutlineInstagram, AiOutlineTwitter } from "react-icons/ai";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 
 export default function Home() {
+  const { data: session } = useSession();
+  const router = useRouter();
   return (
     <div className="bg-gray-50">
       {/* 🚀 Hero Section */}
@@ -42,12 +46,19 @@ export default function Home() {
     animate={{ scale: 1, opacity: 1 }}
     transition={{ duration: 0.5, delay: 0.6 }}
   >
-    <Link href="/book">
-      <button className="mt-6 px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md transition-all duration-500 ease-in-out 
-        hover:bg-gradient-to-r hover:from-[#ffecd2] hover:to-[#fcb69f] hover:scale-105 hover:shadow-lg">
-        Book Now
-      </button>
-    </Link>
+    <button
+      className="mt-6 px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md transition-all duration-500 ease-in-out \
+        hover:bg-gradient-to-r hover:from-[#ffecd2] hover:to-[#fcb69f] hover:scale-105 hover:shadow-lg"
+      onClick={() => {
+        if (!session) {
+          router.push("/auth/login");
+        } else {
+          router.push("/book");
+        }
+      }}
+    >
+      Book Now
+    </button>
   </motion.div>
 </div>
 
