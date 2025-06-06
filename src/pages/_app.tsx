@@ -12,7 +12,7 @@ export default function MyApp({ Component, pageProps: { session, ...pageProps } 
     <SessionProvider session={session}>
       <Navbar />
       <Component {...pageProps} />
-      <ToastContainer position="top-center" autoClose={3000} theme="colored" />
+      <ToastContainer position="top-center" autoClose={3000} theme="colored" closeButton draggable pauseOnHover />
     </SessionProvider>
   );
 }
