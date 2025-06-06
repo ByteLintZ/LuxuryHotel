@@ -71,9 +71,9 @@ export default function Home() {
           viewport={{ once: true }}
         >
           {[
-            { name: "Grand Luxe Hotel", img: "/hotel1.jpg", price: "$299/night" },
-            { name: "Skyline Resort", img: "/hotel2.jpeg", price: "$399/night" },
-            { name: "Paradise Suites", img: "/hotel3.jpg", price: "$349/night" },
+            { name: "Azure Sands Resort", img: "/hotel1.jpg", price: "$980/night" },
+            { name: "Château Lumière", img: "/hotel2.jpg", price: "$450/night" },
+            { name: "Celestia Sky Tower Hotel", img: "/hotel3.jpg", price: "$560/night" },
           ].map((hotel, index) => (
             <motion.div 
               key={index}
