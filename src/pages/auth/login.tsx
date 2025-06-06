@@ -38,8 +38,15 @@ export default function Login() {
       setErrorMessage("Invalid email or password."); // Show error message
       toast.error("Invalid email or password.");
     } else {
-      toast.success("Login successful!");
-      router.push("/"); // Redirect only if successful
+      // Refetch session to get updated user role
+      const session = await fetch("/api/auth/session").then((res) => res.json());
+      if (session?.user?.role === "admin") {
+        toast.success("Login successful! Redirecting to admin dashboard...");
+        router.push("/admin");
+      } else {
+        toast.success("Login successful!");
+        router.push("/");
+      }
     }
   };
 
