@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { FaUserPlus, FaUser, FaEnvelope, FaLock } from "react-icons/fa";
+import { signIn } from "next-auth/react";
+import { toast } from "react-toastify";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -15,12 +17,11 @@ export default function Signup() {
     e.preventDefault();
     if (!name || !email || !password) {
       setError("All fields are required");
+      toast.error("All fields are required");
       return;
     }
-
     setLoading(true);
     setError("");
-
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -29,12 +30,27 @@ export default function Signup() {
       });
       const data = await res.json();
       if (res.ok) {
-        router.push("/auth/login");
+        toast.success("Registration successful! Logging you in...");
+        // Auto-login after registration
+        const signInRes = await signIn("credentials", {
+          redirect: false,
+          email,
+          password,
+        });
+        if (signInRes?.ok) {
+          toast.success("Login successful!");
+          router.push("/");
+        } else {
+          toast.error("Auto-login failed. Please login manually.");
+          router.push("/auth/login");
+        }
       } else {
         setError(data.error || "An unexpected error occurred");
+        toast.error(data.error || "An unexpected error occurred");
       }
     } catch {
       setError("Network error. Please try again.");
+      toast.error("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
