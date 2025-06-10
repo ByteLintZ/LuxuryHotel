@@ -21,7 +21,7 @@ export default function Admin({
   user: AdminUser | null;
   stats: AdminStats | null;
 }) {
-  if (!user || user.role !== "admin") {
+  if (!user || user.role.toLowerCase() !== "admin") {
     return (
       <p className="text-center mt-10 text-xl text-red-500 animate-fadeIn">
         Access Denied
