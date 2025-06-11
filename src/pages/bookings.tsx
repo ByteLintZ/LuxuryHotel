@@ -64,6 +64,8 @@ export default function MyBookings() {
   const [paymentDetails, setPaymentDetails] = useState<Record<string, string>>({});
   const [bookingToPay, setBookingToPay] = useState<Booking | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [bookingIdToCancel, setBookingIdToCancel] = useState<string | null>(null);
 
   useEffect(() => {
     if (session) {
@@ -119,15 +121,13 @@ export default function MyBookings() {
   }, [showDetailsModal, selectedBooking]);
 
   const cancelBooking = async (bookingId: string) => {
-    if (confirm("Are you sure you want to cancel this booking?")) {
-      try {
-        const res = await fetch(`/api/bookings/${bookingId}`, { method: "DELETE" });
-        if (!res.ok) throw new Error("Failed to cancel booking");
-        toast.success("Booking cancelled successfully");
-        fetchBookings();
-      } catch (err) {
-        toast.error("Error: " + (err instanceof Error ? err.message : String(err)));
-      }
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to cancel booking");
+      toast.success("Booking cancelled successfully");
+      fetchBookings();
+    } catch (err) {
+      toast.error("Error: " + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -233,7 +233,11 @@ export default function MyBookings() {
                 )}
                 {booking.status !== 'Cancelled' && (
                   <motion.button
-                    onClick={e => { e.stopPropagation(); cancelBooking(booking.id); }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      setBookingIdToCancel(booking.id);
+                      setShowCancelModal(true);
+                    }}
                     className="mt-4 flex items-center gap-2 text-red-500 hover:text-red-700 transition"
                     whileTap={{ scale: 0.95 }}
                   >
@@ -411,6 +415,27 @@ export default function MyBookings() {
             <button className="bg-green-600 text-white px-6 py-2 rounded-full font-bold shadow-md hover:scale-105 transition" onClick={() => setShowSuccessModal(false)}>
               Close
             </button>
+          </div>
+        </div>
+      )}
+      {/* Cancel Confirmation Modal */}
+      {showCancelModal && bookingIdToCancel && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fadeIn">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl text-gray-900 w-full max-w-md animate-fade-in-up relative text-center">
+            <h2 className="text-2xl font-bold mb-4 text-red-700">Cancel Booking?</h2>
+            <p className="mb-4">Are you sure to cancel this booking?</p>
+            <div className="flex justify-center gap-4">
+              <button className="bg-gray-300 text-gray-800 px-6 py-2 rounded-full font-bold shadow-md hover:scale-105 transition" onClick={() => setShowCancelModal(false)}>
+                No
+              </button>
+              <button className="bg-red-600 text-white px-6 py-2 rounded-full font-bold shadow-md hover:scale-105 transition" onClick={async () => {
+                setShowCancelModal(false);
+                if (bookingIdToCancel) await cancelBooking(bookingIdToCancel);
+                setBookingIdToCancel(null);
+              }}>
+                Yes, Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
