@@ -51,9 +51,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           });
         });
         const { name, location, description, price } = data.fields;
-        if (name !== undefined) updateData.name = name as string;
-        if (location !== undefined) updateData.location = location as string;
-        if (description !== undefined) updateData.description = description as string;
+        if (name !== undefined) updateData.name = Array.isArray(name) ? name[0] : name;
+        if (location !== undefined) updateData.location = Array.isArray(location) ? location[0] : location;
+        if (description !== undefined) updateData.description = Array.isArray(description) ? description[0] : description;
         if (price !== undefined) updateData.price = Number(price);
         let fileObj = data.files.image;
         if (Array.isArray(fileObj)) fileObj = fileObj[0];
@@ -67,9 +67,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } else {
         // Handle JSON
         const { name, location, description, price, image } = req.body;
-        if (name !== undefined) updateData.name = name;
-        if (location !== undefined) updateData.location = location;
-        if (description !== undefined) updateData.description = description;
+        if (name !== undefined) updateData.name = Array.isArray(name) ? name[0] : name;
+        if (location !== undefined) updateData.location = Array.isArray(location) ? location[0] : location;
+        if (description !== undefined) updateData.description = Array.isArray(description) ? description[0] : description;
         if (price !== undefined) updateData.price = Number(price);
         if (image !== undefined) updateData.image = image;
       }
