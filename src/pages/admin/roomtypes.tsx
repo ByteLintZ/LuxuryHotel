@@ -88,17 +88,6 @@ export default function AdminRoomTypes() {
     setShowEditModal(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this room type?")) return;
-    const res = await fetch(`/api/roomtypes/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      toast.success("Room type deleted");
-      fetchRoomTypes();
-    } else {
-      toast.error("Failed to delete room type");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-700 via-cyan-400 to-blue-600 p-8 text-white">
       <ToastContainer position="top-right" />
