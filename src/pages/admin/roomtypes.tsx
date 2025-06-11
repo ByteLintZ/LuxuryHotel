@@ -88,12 +88,6 @@ export default function AdminRoomTypes() {
     setShowEditModal(true);
   };
 
-  // When delete is clicked
-  const handleDeleteClick = (id: string) => {
-    setRoomTypeIdToDelete(id);
-    setShowDeleteModal(true);
-  };
-
   const handleDelete = async (id: string) => {
     if (!window.confirm("Delete this room type?")) return;
     const res = await fetch(`/api/roomtypes/${id}`, { method: "DELETE" });
