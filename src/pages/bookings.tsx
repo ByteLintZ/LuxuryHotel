@@ -100,9 +100,18 @@ export default function MyBookings() {
     return true;
   });
   // Split into active/history
-  const now = new Date();
-  const activeBookings = filteredBookings.filter(b => b.status !== 'Cancelled' && (new Date(b.checkOut) >= now || b.status === 'Pending Payment'));
-  const historyBookings = filteredBookings.filter(b => b.status === 'Cancelled' || new Date(b.checkOut) < now);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isPast = (date: string) => new Date(date).setHours(0,0,0,0) < today.getTime();
+  const historyBookings = filteredBookings.filter(b =>
+    // Cancelled paid bookings
+    (b.status === 'Cancelled' && !!b.paymentMethod) ||
+    // Cancelled or overdue postponed bookings
+    ((b.status === 'Cancelled' || b.status === 'Pending Payment') && isPast(b.checkOut)) ||
+    // Successful check outs
+    (b.status !== 'Cancelled' && b.status !== 'Pending Payment' && isPast(b.checkOut))
+  );
+  const activeBookings = filteredBookings.filter(b => !historyBookings.includes(b));
 
   // Unique hotel names for filter dropdown
   const hotelNames = Array.from(new Set(bookings.map(b => b.hotel.name)));

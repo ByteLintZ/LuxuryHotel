@@ -24,6 +24,7 @@ export default function AdminRoomTypes() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [roomTypeToEdit, setRoomTypeToEdit] = useState<RoomType | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [roomTypeIdToDelete, setRoomTypeIdToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRoomTypes();
@@ -87,17 +88,6 @@ export default function AdminRoomTypes() {
     setShowEditModal(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this room type?")) return;
-    const res = await fetch(`/api/roomtypes/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      toast.success("Room type deleted");
-      fetchRoomTypes();
-    } else {
-      toast.error("Failed to delete room type");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-700 via-cyan-400 to-blue-600 p-8 text-white">
       <ToastContainer position="top-right" />
@@ -132,7 +122,7 @@ export default function AdminRoomTypes() {
                 <td>{hotels.find(h => h.id === rt.hotelId)?.name || ""}</td>
                 <td>
                   <button onClick={() => handleEditClick(rt)} className="text-blue-600 mr-2">Edit</button>
-                  <button onClick={() => handleDelete(rt.id)} className="text-red-600">Delete</button>
+                  <button onClick={() => { setRoomTypeIdToDelete(rt.id); setShowDeleteModal(true); }} className="text-red-600">Delete</button>
                 </td>
               </tr>
             ))}
@@ -152,6 +142,7 @@ export default function AdminRoomTypes() {
               body: JSON.stringify({
                 name: roomTypeToEdit.name,
                 price: roomTypeToEdit.price,
+                hotelId: roomTypeToEdit.hotelId,
               }),
             });
             if (res.ok) {
@@ -182,6 +173,20 @@ export default function AdminRoomTypes() {
                 required
               />
             </div>
+            <div className="mb-4">
+              <label className="block mb-1 font-bold">Hotel</label>
+              <select
+                className="border p-2 rounded w-full"
+                value={roomTypeToEdit.hotelId}
+                onChange={e => setRoomTypeToEdit({ ...roomTypeToEdit, hotelId: e.target.value })}
+                required
+              >
+                <option value="">Select Hotel</option>
+                {hotels.map(h => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </select>
+            </div>
             <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow-md hover:scale-105 transition">Save</button>
             <button type="button" className="ml-2 bg-gray-300 text-gray-800 px-6 py-2 rounded-full font-bold shadow-md hover:scale-105 transition" onClick={() => setShowEditModal(false)}>Cancel</button>
           </form>
@@ -189,17 +194,18 @@ export default function AdminRoomTypes() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
+      {showDeleteModal && roomTypeIdToDelete && (
         <Modal isOpen={showDeleteModal} onRequestClose={() => setShowDeleteModal(false)} ariaHideApp={false} className="bg-white p-8 rounded-2xl shadow-2xl text-gray-900 w-full max-w-md mx-auto mt-20 text-center">
           <h2 className="text-2xl font-bold mb-4 text-red-700">Delete Room Type?</h2>
           <p className="mb-4">Are you sure you want to delete this room type?</p>
           <div className="flex justify-center gap-4">
             <button className="bg-gray-300 text-gray-800 px-6 py-2 rounded-full font-bold shadow-md hover:scale-105 transition" onClick={() => setShowDeleteModal(false)}>No</button>
             <button className="bg-red-600 text-white px-6 py-2 rounded-full font-bold shadow-md hover:scale-105 transition" onClick={async () => {
-              const res = await fetch(`/api/roomtypes/${roomTypeToEdit?.id}`, { method: "DELETE" });
+              const res = await fetch(`/api/roomtypes/${roomTypeIdToDelete}`, { method: "DELETE" });
               if (res.ok) {
                 toast.success("Room type deleted");
                 setShowDeleteModal(false);
+                setRoomTypeIdToDelete(null);
                 fetchRoomTypes();
               } else {
                 toast.error("Failed to delete room type");
