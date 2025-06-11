@@ -24,7 +24,6 @@ export default function AdminRoomTypes() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [roomTypeToEdit, setRoomTypeToEdit] = useState<RoomType | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [roomTypeIdToDelete, setRoomTypeIdToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRoomTypes();
@@ -190,14 +189,14 @@ export default function AdminRoomTypes() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && roomTypeIdToDelete && (
+      {showDeleteModal && (
         <Modal isOpen={showDeleteModal} onRequestClose={() => setShowDeleteModal(false)} ariaHideApp={false} className="bg-white p-8 rounded-2xl shadow-2xl text-gray-900 w-full max-w-md mx-auto mt-20 text-center">
           <h2 className="text-2xl font-bold mb-4 text-red-700">Delete Room Type?</h2>
           <p className="mb-4">Are you sure you want to delete this room type?</p>
           <div className="flex justify-center gap-4">
             <button className="bg-gray-300 text-gray-800 px-6 py-2 rounded-full font-bold shadow-md hover:scale-105 transition" onClick={() => setShowDeleteModal(false)}>No</button>
             <button className="bg-red-600 text-white px-6 py-2 rounded-full font-bold shadow-md hover:scale-105 transition" onClick={async () => {
-              const res = await fetch(`/api/roomtypes/${roomTypeIdToDelete}`, { method: "DELETE" });
+              const res = await fetch(`/api/roomtypes/${roomTypeToEdit?.id}`, { method: "DELETE" });
               if (res.ok) {
                 toast.success("Room type deleted");
                 setShowDeleteModal(false);
