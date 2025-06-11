@@ -101,8 +101,9 @@ export default function MyBookings() {
   });
   // Split into active/history
   const now = new Date();
+  now.setHours(0, 0, 0, 0); // Set to start of today
   const activeBookings = filteredBookings.filter(b => b.status !== 'Cancelled' && (new Date(b.checkOut) >= now || b.status === 'Pending Payment'));
-  const historyBookings = filteredBookings.filter(b => b.status === 'Cancelled' || new Date(b.checkOut) < now);
+  const historyBookings = filteredBookings.filter(b => b.status === 'Cancelled' || new Date(b.checkOut).setHours(0,0,0,0) < now.getTime());
 
   // Unique hotel names for filter dropdown
   const hotelNames = Array.from(new Set(bookings.map(b => b.hotel.name)));
